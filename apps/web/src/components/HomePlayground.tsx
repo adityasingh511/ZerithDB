@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
@@ -17,6 +17,7 @@ import {
 import { usePlaygroundSync } from "@/hooks/usePlaygroundSync";
 import {
   DEFAULT_PLAYGROUND_QUERY,
+  mergePlaygroundNotes,
   runPlaygroundQuery,
   type PlaygroundNote,
 } from "@/lib/playground-queries";
@@ -99,10 +100,18 @@ export default function HomePlayground() {
     insertOnClientA,
   } = usePlaygroundSync();
 
+  const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+    };
+  }, []);
+
   const lineCount = useMemo(() => query.split("\n").length, [query]);
 
   const runQuery = () => {
-    const mergedNotes = [...clientA, ...clientB];
+    const mergedNotes = mergePlaygroundNotes(clientA, clientB);
     const result = runPlaygroundQuery(query, mergedNotes);
 
     if (!result.ok) {
@@ -122,9 +131,17 @@ export default function HomePlayground() {
     }
 
     insertOnClientA(result.note);
-    setSyncPulse("B");
-    setTimeout(() => setSyncPulse(null), 700);
-    setOutput(`Inserted on Client A → syncing via CRDT to Client B...\n• ${result.note.text}`);
+
+    if (isOnline) {
+      setSyncPulse("B");
+      if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+      syncTimeoutRef.current = setTimeout(() => setSyncPulse(null), 700);
+      setOutput(`Inserted on Client A → syncing via CRDT to Client B...\n• ${result.note.text}`);
+    } else {
+      setOutput(
+        `Inserted on Client A while offline → queued for sync when connection is restored.\n• ${result.note.text}`
+      );
+    }
   };
 
   return (

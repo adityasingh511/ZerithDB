@@ -74,14 +74,12 @@ export function mergePlaygroundNotes(
   clientA: PlaygroundNote[],
   clientB: PlaygroundNote[]
 ): PlaygroundNote[] {
-  return [...clientA, ...clientB].reduce((acc, curr) => {
-    const existing = acc.find((note) => note.id === curr.id);
-    if (!existing) {
-      acc.push(curr);
-    } else if (curr.timestamp > existing.timestamp) {
-      existing.text = curr.text;
-      existing.timestamp = curr.timestamp;
+  const merged = new Map<string, PlaygroundNote>();
+  for (const note of [...clientA, ...clientB]) {
+    const existing = merged.get(note.id);
+    if (!existing || note.timestamp > existing.timestamp) {
+      merged.set(note.id, { ...note });
     }
-    return acc;
-  }, [] as PlaygroundNote[]);
+  }
+  return Array.from(merged.values());
 }
