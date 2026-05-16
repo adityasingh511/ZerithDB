@@ -244,8 +244,8 @@ function relayMessage(
   const serialized = JSON.stringify(msg);
 
   if (msg.to !== undefined) {
-    // // Log unicast messaging details for debugging
-    logger.debug(`[UNICAST] from=${senderPeerId} to=${msg.to}`);
+    // Log unicast messaging details for debugging (Safely handle optional msg.to)
+    logger.debug(`[UNICAST] from=${senderPeerId} to=${msg.to ?? "unknown"}`);
 
     // Unicast to a specific peer
     for (const peer of room) {
@@ -255,7 +255,7 @@ function relayMessage(
       }
     }
   } else {
-    // // Log broadcast messaging details for debugging
+    // Log broadcast messaging details for debugging
     logger.debug(`[BROADCAST] from=${senderPeerId} room=${roomId}`);
 
     // Broadcast to all peers except sender
