@@ -24,3 +24,9 @@ test-agent/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# Claude Code
+.claude/
+.claudeignore
+*.claude
+
